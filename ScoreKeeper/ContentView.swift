@@ -8,10 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var players: [Player] = [
-        Player(name: "Omar", score: 0, color: .orange),
-        Player(name: "Ali", score: 0, color: .teal),
-    ]
+    @State private var scoreboard = Scoreboard()
+    @State private var startingPoint: Int = 0
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -19,7 +17,9 @@ struct ContentView: View {
                 .font(.title)
                 .bold()
             
-            List {
+            
+            SettingsView(selectedStartingPoints: $startingPoint)
+            
                 Grid {
                     GridRow {
                         Text("Player")
@@ -32,14 +32,14 @@ struct ContentView: View {
                     .gridColumnAlignment(.leading)
                     .padding(.top)
                     
-                    ForEach($players) { $player in
+                    ForEach($scoreboard.players) { $player in
                         GridRow {
                             TextField("Name", text: $player.name)
                                 .autocorrectionDisabled(true)
                             
                             Text("\(player.score)")
                                 .padding(.trailing, 8)
-                                .foregroundStyle(player.color)
+//                                .foregroundStyle(player.color)
                             
                             Stepper("\(player.score)", value: $player.score, in: 0...20)
                                 .labelsHidden()
@@ -49,23 +49,25 @@ struct ContentView: View {
                 }
                 
                 Button("Add Player", systemImage: "plus") {
-                    players.append(Player(name: "", score: 0, color: .clear))
+                    scoreboard.players.append(Player(name: "", score: 0))
                 }
-                
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 8))
             
-            HStack {
-                Spacer()
-                
-                Button("Edit") {
-                     
-                 }
-                .buttonStyle(.borderedProminent)
-                .font(.headline)
-                
-                Spacer()
-
+            Spacer()
+            
+            switch scoreboard.state {
+             case .setup:
+                Button("Start Game", systemImage: "play.fill") {
+                    scoreboard.state = .playing
+                    scoreboard.resetScores(to: startingPoint)
+                }
+            case .playing:
+               Button("End Game", systemImage: "stop.fill") {
+                   scoreboard.state = .gameOver
+               }
+            case .gameOver:
+               Button("Reset Game", systemImage: "arrow.counterclockwise") {
+                   scoreboard.state = .setup
+               }
             }
         
         }

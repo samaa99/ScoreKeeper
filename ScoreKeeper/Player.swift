@@ -13,5 +13,4 @@ struct Player: Identifiable {
     var id: UUID = UUID()
     var name: String
     var score: Int = 0
-    var color: Color
 }
