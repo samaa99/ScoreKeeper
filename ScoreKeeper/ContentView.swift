@@ -18,7 +18,8 @@ struct ContentView: View {
                 .bold()
             
             
-            SettingsView(selectedStartingPoints: $startingPoint)
+            SettingsView(selectedStartingPoints: $startingPoint, doesHighestScoreWin: $scoreboard.doesHighestScoreWin)
+                .disabled(scoreboard.state != .setup)
             
                 Grid {
                     GridRow {
@@ -27,6 +28,7 @@ struct ContentView: View {
                         
                         Text("Score")
                             .font(.headline)
+                            .opacity(scoreboard.state == .setup ? 0 : 1.0)
                         
                     }
                     .gridColumnAlignment(.leading)
@@ -34,16 +36,25 @@ struct ContentView: View {
                     
                     ForEach($scoreboard.players) { $player in
                         GridRow {
-                            TextField("Name", text: $player.name)
-                                .autocorrectionDisabled(true)
+                            
+                            HStack {
+                                if scoreboard.winners.contains(player)  {
+                                    Image(systemName: "crown.fill")
+                                        .foregroundStyle(.yellow)
+                                }
+                                
+                                TextField("Name", text: $player.name)
+                                    .autocorrectionDisabled(true)
+                            }
+                            
                             
                             Text("\(player.score)")
                                 .padding(.trailing, 8)
-//                                .foregroundStyle(player.color)
+                                .opacity(scoreboard.state == .setup ? 0 : 1.0)
                             
                             Stepper("\(player.score)", value: $player.score, in: 0...20)
                                 .labelsHidden()
-                                
+                                .opacity(scoreboard.state == .setup ? 0 : 1.0)
                         }
                     }
                 }
@@ -51,24 +62,35 @@ struct ContentView: View {
                 Button("Add Player", systemImage: "plus") {
                     scoreboard.players.append(Player(name: "", score: 0))
                 }
+                .opacity(scoreboard.state == .setup ? 1.0 : 0)
             
             Spacer()
             
-            switch scoreboard.state {
-             case .setup:
-                Button("Start Game", systemImage: "play.fill") {
-                    scoreboard.state = .playing
-                    scoreboard.resetScores(to: startingPoint)
+            HStack {
+                Spacer()
+                
+                switch scoreboard.state {
+                case .setup:
+                    Button("Start Game", systemImage: "play.fill") {
+                        scoreboard.state = .playing
+                        scoreboard.resetScores(to: startingPoint)
+                    }
+                case .playing:
+                    Button("End Game", systemImage: "stop.fill") {
+                        scoreboard.state = .gameOver
+                    }
+                case .gameOver:
+                    Button("Reset Game", systemImage: "arrow.counterclockwise") {
+                        scoreboard.state = .setup
+                    }
                 }
-            case .playing:
-               Button("End Game", systemImage: "stop.fill") {
-                   scoreboard.state = .gameOver
-               }
-            case .gameOver:
-               Button("Reset Game", systemImage: "arrow.counterclockwise") {
-                   scoreboard.state = .setup
-               }
+                
+                Spacer()
             }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
+            .controlSize(.large)
+            .tint(.blue)
         
         }
         .padding()
